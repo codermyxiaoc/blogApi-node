@@ -1,10 +1,10 @@
 const express = require('express')
-
 const config = require('./token/config')
 //插件导入
 const cors = require('cors')
 const joi = require('joi')
 const { expressjwt: jwt } = require('express-jwt')
+
 //路由导入
 const user_router = require('./router/user')
 const userinfo_router = require('./router/userinfo')
@@ -16,8 +16,6 @@ const app = express()
 app.use(express.urlencoded({extended: false}))
 app.use(express.json())
 app.use(cors())
-
-
 app.use((req, res, next) => {
     res.cc = function (err, status = 1) {
         res.send({
@@ -27,6 +25,8 @@ app.use((req, res, next) => {
     }
     next()
 })
+
+
 app.use(express.static('./headpro'))
 app.use(jwt({ secret: config.jwtSecretKey, algorithms: ["HS256"] }).unless({ path: [/^\/api/] }))
 
@@ -46,11 +46,13 @@ app.use((err, req, res, next) => {
     res.cc(err)
 })
 
+
+
 //测试地址
-/* app.listen(80,()=> {
-    console.log('http://127.0.0.1');
-}) */
-//服务器地址
-app.listen(8080, () => {
+app.listen(80,()=> {
     console.log('http://127.0.0.1');
 })
+//服务器地址
+/* app.listen(8080, () => {
+    console.log('http://127.0.0.1');
+}) */

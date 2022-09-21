@@ -25,3 +25,12 @@ exports.deleteart_func = (req,res) => {
     })
 
 }
+exports.myart_func = (req,res) => {
+    const sqlfind = 'select * from comment where user_id=?'
+    db.query(sqlfind,req.auth.user_id,(err,results) => {
+        res.send({
+            status: 0,
+            message: results
+        })
+    })
+}

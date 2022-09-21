@@ -3,6 +3,7 @@ const joi = require('joi')
 const username =  joi.string().alphanum().min(1).max(10).required()
 const password = joi.string().pattern(/^[\S]{6,12}$/).required()
 const cell_phone = joi.number().min(11).required()
+const code  = joi.number().min(4).required()
 const nickname = joi.string()
 const sex = joi.string()
 exports.createuser_schema = {
@@ -10,6 +11,7 @@ exports.createuser_schema = {
         username,
         password,
         cell_phone,
+        code,
         nickname,
         sex
     }
@@ -45,5 +47,10 @@ exports.updatepwd_schema = {
 exports.offuser_schema = {
     body: {
         password
+    }
+}
+exports.code_schema = {
+    body: {
+        cell_phone
     }
 }

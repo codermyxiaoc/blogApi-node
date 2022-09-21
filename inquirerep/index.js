@@ -6,6 +6,13 @@ exports.inquirerep_func = (req,res) => {
     var datarep = []
     db.query(sqlfind1, (err, results) => {
         datarep.push(...results)
+        if(datarep.length <= 0) {
+            res.send({
+                status: 0,
+                message: []
+            }) 
+            return 
+        }
         for(let i = 0 ; i < datarep.length; i++){
             db.query(sqlfind2, datarep[i].user_id, (err, results) => {
                 datarep[i].nickname = results[0].nickname
@@ -34,6 +41,13 @@ exports.inqcomment_func = (req,res) => {
     var datacom = []
     db.query(sqlfind1,req.body.comment_id,(err,results) => {
         datacom.push(...results)
+        if (datacom.length <= 0) {
+            res.send({
+                status: 0,
+                message: []
+            })
+            return 
+        }
         for (let i = 0; i < datacom.length; i++) {
             db.query(sqlfind2, datacom[i].user_id, (err, results) => {
                 datacom[i].nickname = results[0].nickname
@@ -41,11 +55,10 @@ exports.inqcomment_func = (req,res) => {
                 if (i === datacom.length - 1) {
                     res.send({
                         status: 0,
-                        message: datacom
+                        message: datacom || []
                     })
                 }
             })
         }
-        
     })
 }
