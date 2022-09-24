@@ -54,3 +54,11 @@ exports.code_schema = {
         cell_phone
     }
 }
+exports.forgetpow_schema = {
+    body: {
+        cell_phone,
+        Pwdone: password,
+        Pwdtow: joi.string().valid(joi.ref('Pwdone')).label('两次密码必须相同'),
+        code
+    }
+}

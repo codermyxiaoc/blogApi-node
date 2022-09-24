@@ -3,10 +3,12 @@ const bcryptjs = require('bcryptjs')
 const { dateFormat } = require('../dateFormat/index')
 const jwt = require("jsonwebtoken")
 const config = require('../token/config')
-const sendLoginCroeCode = require('../code/index')
+const sendLoginCroeCode = require('../code/createuser')
+const sendLoginForgetcode = require('../code/forgetcode')
 const client = require('../redis/idnex')
 const { promisify } = require('util')
 const getAsync = promisify(client.get).bind(client)
+
 exports.createuser_func = (req,res) => {
     const sqlfind = 'select * from ev_users where username=? or cell_phone=?'
     const userinfo = req.body
@@ -19,7 +21,7 @@ exports.createuser_func = (req,res) => {
         let phonekey = `currentPhoneeKey${userinfo.cell_phone}`
         let code = await getAsync(codekey)
         let phone = await getAsync(phonekey)
-        if (code == null && phone == null) {
+        if (code == null || phone == null) {
            return res.cc('验证码已过期')
         }
        if (code == userinfo.code && phone == userinfo.cell_phone) {
@@ -27,6 +29,8 @@ exports.createuser_func = (req,res) => {
             delete userinfo.code
             db.query(sqladd, userinfo, (err, results) => {
                 if (err) { return res.cc(err) }
+                client.del(codekey)
+                client.del(phonekey)
                 if (results.affectedRows !== 1) { return res.cc('注册失败,请稍后再试') }
                 res.cc('注册成功', 0)
             })
@@ -84,4 +88,50 @@ exports.getCode_func = async (req,res) => {
             })
         }
     }
+}
+exports.forgetPowcode_func = (req,res) => {
+    let sqlfind = 'select * from ev_users where cell_phone = ?'
+    db.query(sqlfind, req.body.cell_phone,async (err,result) => {
+        if(result.length == 0) return res.cc('此用户还未注册，请先注册')
+        let verCode = String(1000 + parseInt(Math.random() * 1000000)).substr(0, 4);
+        let coderesult = await sendLoginForgetcode(req.body.cell_phone,verCode) 
+        if (coderesult.Code == 'OK') {
+            let forgetcodekey = `forgetcode${verCode}`
+            let forgetphonekey = `forgetcode${req.body.cell_phone}`
+            let flag1 = client.set(forgetcodekey,verCode)
+            let flag2 = client.set(forgetphonekey, req.body.cell_phone)
+            if(flag1 && flag2) {
+                client.expire(forgetcodekey,120)
+                client.expire(forgetphonekey, 120)
+                res.send({
+                    status: 0,
+                    code: 'OK'
+                })
+            }
+
+        }
+    })
+}
+exports.forgetPow_func = async (req,res) => {
+    let info = req.body
+    let forgetcodekey = `forgetcode${info.code}`
+    let forgetphonekey = `forgetcode${info.cell_phone}`
+    let code = await getAsync(forgetcodekey)
+    let phone = await getAsync(forgetphonekey)
+    if(code == null || phone == null) {
+        return res.cc('验证码错误')
+    }
+    let password = bcryptjs.hashSync(info.Pwdtow, 10)
+    const sqlfind = 'update ev_users set password = ? where cell_phone = ? '
+    db.query(sqlfind,[password,info.cell_phone],async (err,result) => {
+        if(err) return res.cc(err)
+        if (result.affectedRows !== 1) return res.cc('修改失败')
+        client.del(forgetcodekey)
+        client.del(forgetphonekey)
+        res.send({
+            status: 0,
+            message: '修改成功'
+        }) 
+    })
+    
 }
