@@ -1,7 +1,7 @@
 const SMSClient = require('@alicloud/sms-sdk');//用户调用阿里短信平台的框架
 
-const accessKeyId = '---请用自己的----';//短信平台获取accessKeyId
-const secretAccessKey = '---请用自己的----';//短信平台获取accessKeySecret
+const accessKeyId = 'LTAI5t5hh4ZATNza39DWNrdB';//短信平台获取accessKeyId
+const secretAccessKey = 'nGu26uYoUUukHfmWxIrBZ6e2tvAjza';//短信平台获取accessKeySecret
 
 let smsClient = new SMSClient({ accessKeyId, secretAccessKey });//实例一个发送短信的实例
 
@@ -13,8 +13,8 @@ let sendLoginCroeCode = async (phone, verCode) => {//发送短信功能封装为
     //构造请求参数：
     var dataToSend = {
       PhoneNumbers: phone,
-      SignName: '---请用自己的----',
-      TemplateCode: '---请用自己的----',
+      SignName: '心想心向',
+      TemplateCode: 'SMS_253115197',
       TemplateParam: JSON.stringify({ code: verCode }),
     };
 
