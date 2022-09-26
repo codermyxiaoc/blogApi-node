@@ -13,7 +13,7 @@ let sendcode = async (phone, verCode, template) => {//发送短信功能封装�
     //构造请求参数：
     var dataToSend = {
       PhoneNumbers: phone,
-      SignName: '心想心向',
+      SignName: '---请用自己的---',
       TemplateCode: template,
       TemplateParam: JSON.stringify({ code: verCode }),
     };
