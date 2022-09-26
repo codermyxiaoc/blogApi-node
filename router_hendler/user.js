@@ -72,7 +72,8 @@ exports.phonelogin_func = (req,res) => {
         const tokenStr = jwt.sign(user, config.jwtSecretKey, { expiresIn: config.expiresIn })
         res.send({
             status: 0,
-            message: 'Bearer ' + tokenStr
+            message: '登入成功',
+            token: 'Bearer ' + tokenStr
         })
     })
 }
@@ -146,7 +147,7 @@ exports.logincode_func = (req,res) => {
     db.query(sqlfind, req.body.cell_phone, async (err, result) => {
         if (result.length == 0) return res.cc('此用户还未注册，请先注册')
         let verCode = String(1000 + parseInt(Math.random() * 1000000)).substr(0, 4);
-        let coderesult = await sendcode(req.body.cell_phone, verCode, phoneLogin_template)
+        let coderesult = await sendcode(req.body.cell_phone, verCode, phoneLogin_template) 
         if (coderesult.Code == 'OK') {
             let logincodekey = `logincode${verCode}`
             let loginphonekey = `logincode${req.body.cell_phone}`
