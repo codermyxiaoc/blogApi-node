@@ -25,7 +25,7 @@ exports.namelogin_schema = {
 exports.phonelogin_schema = {
     body: {
         cell_phone,
-        password
+        code
     }
 }
 const email = joi.string().email()

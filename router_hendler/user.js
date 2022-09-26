@@ -3,8 +3,8 @@ const bcryptjs = require('bcryptjs')
 const { dateFormat } = require('../dateFormat/index')
 const jwt = require("jsonwebtoken")
 const config = require('../token/config')
-const sendLoginCroeCode = require('../code/createuser')
-const sendLoginForgetcode = require('../code/forgetcode')
+const sendcode = require('../code/sendcode')
+const { creatcUser_template, forget_template, phoneLogin_template } = require('../code/template')
 const client = require('../redis/idnex')
 const { promisify } = require('util')
 const getAsync = promisify(client.get).bind(client)
@@ -58,10 +58,16 @@ exports.namelogin_func = (req,res) => {
 
 exports.phonelogin_func = (req,res) => {
     const sqlfind = 'select * from ev_users where cell_phone=? and status=0'
-    db.query(sqlfind,req.body.cell_phone,(err,results) => {
+    db.query(sqlfind,req.body.cell_phone,async (err,results) => {
         if(err) {return res.cc(err) }
         if (results.length !== 1) { return res.cc('无用户') }
-        if(!bcryptjs.compareSync(req.body.password,results[0].password)) { return res.cc('密码错误')}
+        let logincodekey = `logincode${req.body.code}`
+        let loginphonekey = `logincode${req.body.cell_phone}`
+        let code = await getAsync(logincodekey)
+        let phone = await getAsync(loginphonekey)
+        if(code == null || phone == null) return res.cc('验证码错误')
+        client.del(logincodekey)
+        client.del(loginphonekey)
         const user = { ...results[0], password: '', user_pic: '' }
         const tokenStr = jwt.sign(user, config.jwtSecretKey, { expiresIn: config.expiresIn })
         res.send({
@@ -73,7 +79,7 @@ exports.phonelogin_func = (req,res) => {
 
 exports.getCode_func = async (req,res) => {
     let verCode = String(1000 + parseInt(Math.random() * 1000000)).substr(0, 4);
-    const result = await sendLoginCroeCode(req.body.cell_phone, verCode)  
+    const result = await sendcode(req.body.cell_phone, verCode, creatcUser_template)  
     if (result.Code === 'OK') {
         let codekey = `currentCodeKey${verCode}`
         let phonekey = `currentPhoneeKey${req.body.cell_phone}`
@@ -94,7 +100,7 @@ exports.forgetPowcode_func = (req,res) => {
     db.query(sqlfind, req.body.cell_phone,async (err,result) => {
         if(result.length == 0) return res.cc('此用户还未注册，请先注册')
         let verCode = String(1000 + parseInt(Math.random() * 1000000)).substr(0, 4);
-        let coderesult = await sendLoginForgetcode(req.body.cell_phone,verCode) 
+        let coderesult = await sendcode(req.body.cell_phone, verCode, forget_template) 
         if (coderesult.Code == 'OK') {
             let forgetcodekey = `forgetcode${verCode}`
             let forgetphonekey = `forgetcode${req.body.cell_phone}`
@@ -134,4 +140,26 @@ exports.forgetPow_func = async (req,res) => {
         }) 
     })
     
+}
+exports.logincode_func = (req,res) => {
+    let sqlfind = 'select * from ev_users where cell_phone = ?'
+    db.query(sqlfind, req.body.cell_phone, async (err, result) => {
+        if (result.length == 0) return res.cc('此用户还未注册，请先注册')
+        let verCode = String(1000 + parseInt(Math.random() * 1000000)).substr(0, 4);
+        let coderesult = await sendcode(req.body.cell_phone, verCode, phoneLogin_template)
+        if (coderesult.Code == 'OK') {
+            let logincodekey = `logincode${verCode}`
+            let loginphonekey = `logincode${req.body.cell_phone}`
+            let flag1 = client.set(logincodekey, verCode)
+            let flag2 = client.set(loginphonekey, req.body.cell_phone)
+            if(flag1 && flag2) {
+                client.expire(logincodekey, 120)
+                client.expire(loginphonekey, 120)
+                res.send({
+                    status: 0,
+                    message: 'OK'
+                })
+            }
+        }
+    })
 }
