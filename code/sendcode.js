@@ -1,7 +1,7 @@
 const SMSClient = require('@alicloud/sms-sdk');//用户调用阿里短信平台的框架
 
-const accessKeyId = 'LTAI5t5hh4ZATNza39DWNrdB';//短信平台获取accessKeyId
-const secretAccessKey = 'nGu26uYoUUukHfmWxIrBZ6e2tvAjza';//短信平台获取accessKeySecret
+const accessKeyId = '---请用自己的---';//短信平台获取accessKeyId
+const secretAccessKey = '---请用自己的---';//短信平台获取accessKeySecret
 
 let smsClient = new SMSClient({ accessKeyId, secretAccessKey });//实例一个发送短信的实例
 
